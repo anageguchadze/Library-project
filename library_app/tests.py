@@ -25,6 +25,17 @@ def test_author_book_relationship():
     assert Book.objects.count() == 0
 
 
+@pytest.mark.django_db
+def test_book_creation():
+    client = APIClient()
+    user = User.objects.create_user(username='testuser', password='testpassword')
+    url = '/api/books/'
+
+    response = client.post(url, {'title': 'The Master and Margarita'}, format='json')
+    
+    assert response.status_code == 401
+
+    
 
 
 # class AuthorTests(TestCase):
