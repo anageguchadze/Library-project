@@ -1,5 +1,3 @@
-# Django REST API - Authors and Books
-
 # Django Book and Author API
 
 A simple RESTful API built with Django and Django REST Framework (DRF) to manage books and authors, with token-based authentication using Django Simple JWT.
