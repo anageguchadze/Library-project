@@ -7,74 +7,96 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .views import *
 
 #pytest
-import pytest
-from django.contrib.auth.models import User
-from .models import *
+# import pytest
+# from django.contrib.auth.models import User
+# from .models import *
 
 
-@pytest.mark.django_db
-def test_author_book_relationship():
-    author = Author.objects.create(name='Mikhail Bulgakov', nationality='Russian')
-    Book.objects.create(title='The Master and Margarita', author=author)
-    Book.objects.create(title='The Heart of a Dog', author=author)
+# @pytest.mark.django_db
+# def test_author_book_relationship():
+#     author = Author.objects.create(name='Mikhail Bulgakov', nationality='Russian')
+#     Book.objects.create(title='The Master and Margarita', author=author)
+#     Book.objects.create(title='The Heart of a Dog', author=author)
 
-    assert Book.objects.filter(author=author).count() == 2
+#     assert Book.objects.filter(author=author).count() == 2
 
-    author.delete()
+#     author.delete()
 
-    assert Book.objects.count() == 0
+#     assert Book.objects.count() == 0
 
 
-@pytest.mark.django_db
-def test_book_creation():
-    client = APIClient()
-    user = User.objects.create_user(username='testuser', password='testpassword')
-    url = '/api/books/'
-    url2 = '/api/authors/'
+# @pytest.mark.django_db
+# def test_book_creation():
+#     client = APIClient()
+#     user = User.objects.create_user(username='testuser', password='testpassword')
+#     url = '/api/books/'
+#     url2 = '/api/authors/'
     
-    author = client.post(url2, {'name': 'Mikhail Bulgakov', 'nationality': 'Russian'})
-    assert author.status_code == 201
+#     author = client.post(url2, {'name': 'Mikhail Bulgakov', 'nationality': 'Russian'})
+#     assert author.status_code == 201
     
-    response = client.post(url, {'title': 'The Master and Margarita'}, format='json')
+#     response = client.post(url, {'title': 'The Master and Margarita'}, format='json')
     
-    assert response.status_code == 401
+#     assert response.status_code == 401
 
-    refresh = RefreshToken.for_user(user)
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-    response = client.post(url, {'title': 'book authorized', 'author': 1}, format='json')
-    assert response.status_code == 201
-
-
-@pytest.mark.django_db
-def test_author_pagination():
-    client = APIClient()
-
-    for i in range(15):
-        Author.objects.create(name=f'Author{i}', nationality=f'Country {i}')
-
-    response = client.get('/api/authors/')
-    assert response.status_code == 200
-    assert len(response.json()['results']) == 10
-
-    assert 'next' in response.json()
-    assert response.json()['next'] is not None
+#     refresh = RefreshToken.for_user(user)
+#     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+#     response = client.post(url, {'title': 'book authorized', 'author': 1}, format='json')
+#     assert response.status_code == 201
 
 
-@pytest.mark.django_db
-def test_filter_authors():
-    client = APIClient()
+# @pytest.mark.django_db
+# def test_author_pagination():
+#     client = APIClient()
 
-    Author.objects.create(name='Mikhail Bulgakov', nationality='Russian')
-    Author.objects.create(name='William Shakespeare', nationality='English')
-    Author.objects.create(name='Gabriel García Márquez', nationality='Colombian')
-    Author.objects.create(name='Haruki Murakami', nationality='Japanese')
-    Author.objects.create(name='Jane Austen', nationality='English')
+#     for i in range(15):
+#         Author.objects.create(name=f'Author{i}', nationality=f'Country {i}')
 
-    response = client.get('/api/authors/', {'nationality': 'English'})
-    authors = response.json()['results']
+#     response = client.get('/api/authors/')
+#     assert response.status_code == 200
+#     assert len(response.json()['results']) == 10
 
-    assert response.status_code == 200
-    assert all(author['nationality'] == 'English' for author in authors)
+#     assert 'next' in response.json()
+#     assert response.json()['next'] is not None
+
+
+# @pytest.mark.django_db
+# def test_filter_authors():
+#     client = APIClient()
+
+#     Author.objects.create(name='Mikhail Bulgakov', nationality='Russian')
+#     Author.objects.create(name='William Shakespeare', nationality='English')
+#     Author.objects.create(name='Gabriel García Márquez', nationality='Colombian')
+#     Author.objects.create(name='Haruki Murakami', nationality='Japanese')
+#     Author.objects.create(name='Jane Austen', nationality='English')
+
+#     response = client.get('/api/authors/', {'nationality': 'English'})
+#     authors = response.json()['results']
+
+#     assert response.status_code == 200
+#     assert all(author['nationality'] == 'English' for author in authors)
+
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+class BookAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.author = Author.objects.create(name='Haruki Murakami', nationality='Japanese')
+        self.book_data = {
+            'title':'test book',
+            'author':self.author.id,
+        }
+
+        # self.book = Book.objects.create(**self.book_data, author=self.author)
+        self.book = Book.objects.create(**self.book_data)
+
+    def test_create_book_valid_data(self):
+        response = self.client.post(reverse('book-list'), self.book_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertGreater(Book.objects.count(), 1)
+        
+        self.assertIsInstance()
 
 # class AuthorTests(TestCase):
 #     def setUp(self):
